@@ -1,0 +1,7 @@
+build
+.bzr
+.cproject
+.project
+.settings
+.dep
+*.layout
