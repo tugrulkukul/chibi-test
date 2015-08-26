@@ -57,7 +57,7 @@ static void squareWave(void *arg)
         //systime_t wakeTime = chVTGetSystemTimeX();
         //uint32_t generator = (uint32_t) wakeTime;
         //generator = (ST2MS(generator) / 1000) % 10;
-        uint32_t period = 1500; // usec
+        uint32_t period = 1000; // usec
         palSetPad(GPIOB, 0);
         chThdSleepMicroseconds(period/2);
         palClearPad(GPIOB, 0);
