@@ -34,10 +34,25 @@ static THD_FUNCTION(Thread2, arg) {
     (void)arg;
     //chRegSetThreadName("pwm-test");
     pwmcnt_t duty = 1024;
+    bool direction = true;
     while (true) {
         pwmEnableChannel(&PWMD4, 0, (pwmcnt_t)duty);
-        chThdSleepMilliseconds(10);
-        duty -= 1;
+        chThdSleepMilliseconds(1);
+        if (direction) {
+            duty -= 1;
+        } else {
+            duty += 1;
+        }
+
+        if (duty < 1) {
+            direction = false;
+        }
+
+        if (duty > 1023) {
+            direction = true;
+        }
+
+
     }
 
 }
