@@ -3,8 +3,8 @@
 #include "test.h"
 
 static PWMConfig pwmcfg = {
-  200000, /* 200Khz PWM clock frequency*/
-  1024, /* PWM period of 1024 ticks ~ 0.005 second */
+  2000000, /* 200Khz PWM clock frequency*/
+  4, /* PWM period of 1024 ticks ~ 0.005 second */
   NULL, /* No callback */
   /* Only channel 1 enabled */
   {
@@ -33,26 +33,10 @@ static THD_FUNCTION(Thread1, arg) {
 static THD_FUNCTION(Thread2, arg) {
     (void)arg;
     //chRegSetThreadName("pwm-test");
-    pwmcnt_t duty = 1024;
-    bool direction = true;
+    pwmcnt_t duty = 2;
     while (true) {
-        pwmEnableChannel(&PWMD4, 0, (pwmcnt_t)duty);
+        pwmEnableChannel(&PWMD1, 0, (pwmcnt_t)duty);
         chThdSleepMilliseconds(1);
-        if (direction) {
-            duty -= 1;
-        } else {
-            duty += 1;
-        }
-
-        if (duty < 1) {
-            direction = false;
-        }
-
-        if (duty > 1023) {
-            direction = true;
-        }
-
-
     }
 
 }
@@ -63,12 +47,8 @@ int main(void)
 	chSysInit();
 
 
-    pwmStart(&PWMD4, &pwmcfg);
-    palSetPadMode(GPIOD, GPIOD_LED4, PAL_MODE_ALTERNATE(2));      /* Green.   */
-    //palSetPadMode(GPIOD, GPIOD_LED3, PAL_MODE_ALTERNATE(2));      /* Orange.  */
-    //palSetPadMode(GPIOD, GPIOD_LED5, PAL_MODE_ALTERNATE(2));      /* Red.     */
-    //palSetPadMode(GPIOD, GPIOD_LED6, PAL_MODE_ALTERNATE(2));      /* Blue.    */
-
+    pwmStart(&PWMD1, &pwmcfg);
+    palSetPadMode(GPIOE, 9, PAL_MODE_ALTERNATE(1));
 
 
     /* serial port */
