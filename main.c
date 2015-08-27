@@ -34,9 +34,11 @@ static THD_FUNCTION(Thread2, arg) {
     (void)arg;
     //chRegSetThreadName("pwm-test");
     pwmcnt_t duty = 2;
+    pwmEnableChannel(&PWMD1, 0, (pwmcnt_t)duty);
     while (true) {
-        pwmEnableChannel(&PWMD1, 0, (pwmcnt_t)duty);
-        chThdSleepMilliseconds(1);
+        pwmChangePeriod(&PWMD1, duty);
+        duty += 1;
+        chThdSleepMilliseconds(100);
     }
 
 }
