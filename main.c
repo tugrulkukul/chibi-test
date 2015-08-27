@@ -33,12 +33,14 @@ static THD_FUNCTION(Thread1, arg) {
 static THD_FUNCTION(Thread2, arg) {
     (void)arg;
     //chRegSetThreadName("pwm-test");
-    pwmcnt_t duty = 2;
+    pwmcnt_t duty = 2, period = 40;
     pwmEnableChannel(&PWMD1, 0, (pwmcnt_t)duty);
     while (true) {
-        pwmChangePeriod(&PWMD1, duty);
-        duty += 1;
-        chThdSleepMilliseconds(100);
+        //pwmEnableChannel(&PWMD1, 0, (pwmcnt_t)duty);
+        pwmEnableChannel(&PWMD1, 0, PWM_PERCENTAGE_TO_WIDTH (&PWMD1, 5000)); /* 50% */
+        pwmChangePeriod(&PWMD1, (pwmcnt_t)period);
+        period += 1;
+        chThdSleepMilliseconds(200);
     }
 
 }
