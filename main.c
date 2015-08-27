@@ -17,6 +17,7 @@ static PWMConfig pwmcfg = {
 
 
 static THD_WORKING_AREA(waThread1, 128);
+static THD_WORKING_AREA(waThread2, 128);
 static THD_FUNCTION(Thread1, arg) {
 
   (void)arg;
@@ -27,6 +28,18 @@ static THD_FUNCTION(Thread1, arg) {
     palClearPad(GPIOD, GPIOD_LED3);     /* Orange.  */
     chThdSleepMilliseconds(500);
   }
+}
+
+static THD_FUNCTION(Thread2, arg) {
+    (void)arg;
+    //chRegSetThreadName("pwm-test");
+    pwmcnt_t duty = 1024;
+    while (true) {
+        pwmEnableChannel(&PWMD4, 0, (pwmcnt_t)duty);
+        chThdSleepMilliseconds(10);
+        duty -= 1;
+    }
+
 }
 
 int main(void)
@@ -41,11 +54,11 @@ int main(void)
     //palSetPadMode(GPIOD, GPIOD_LED5, PAL_MODE_ALTERNATE(2));      /* Red.     */
     //palSetPadMode(GPIOD, GPIOD_LED6, PAL_MODE_ALTERNATE(2));      /* Blue.    */
 
-    pwmEnableChannel(&PWMD4, 0, (pwmcnt_t)24);
 
 
     /* serial port */
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
+    chThdCreateStatic(waThread2, sizeof(waThread2), NORMALPRIO, Thread2, NULL);
 
 
 	while(true){
