@@ -5,7 +5,6 @@
 
 #define N 16
 
-#pragma OPTIMIZE OFF
 
 
 typedef struct
@@ -24,9 +23,52 @@ const char mask[4][30] = {{'1','1','1','1','1','1','1','1','1','1','1','1','1','
 
 static THD_WORKING_AREA(readerArea,128);/*boyut tamamen sallama*/
 static THD_WORKING_AREA(worker1Area,128);/*boyut hala sallama*/
-static THD_WORKING_AREA(squareWaveWA, 128);
+static THD_WORKING_AREA(analogReadWA, 128);
 
 static MAILBOX_DECL(mailman, &kutu,64);
+
+/* ADC Related */
+
+static ADCConfig adccfg = {};
+
+// Create buffer to store ADC results. This is
+// one-dimensional interleaved array
+#define ADC_BUF_DEPTH 1 // Tek okuma yapacağız her seferinde, continous ve circular buffer tipleri de var
+#define ADC_CH_NUM 1    // Tek girişten okuyacağız
+static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
+
+static ADCConversionGroup adccg = {
+   // this 3 fields are common for all MCUs
+      // set to TRUE if need circular buffer, set FALSE otherwise
+      FALSE,
+      // number of channels
+      (uint16_t)(ADC_CH_NUM),
+      // callback function when conversion ends
+      NULL,
+      //callback function when error appears
+      NULL,
+    //look to datasheet for information about the registers
+      // CR1 register content
+      0,
+      // CR2 register content
+      0,
+      // SMRP1 register content
+      0,
+      // SMRP2 register content
+      0,
+      // SQR1 register content
+      ((ADC_CH_NUM - 1) << 20),
+      // SQR2 register content
+      0,
+      // SQR3 register content. We must select 1 channel
+      // For example 10th channel
+      // if we want to select more than 1 channel then simply
+      // shift and logic or the values example (ch 15 & ch 10) : (15 | (10 << 5))
+      10,
+};
+
+/* ADC Related */
+
 
 static int isEqual(char *val1, char *val2,int count)
 {
@@ -42,28 +84,19 @@ static int isEqual(char *val1, char *val2,int count)
     return 1;
 }
 
-static void squareWave(void *arg)
+static void analogReadtoSD(void *arg)
 {
-    /* PB0 will be used for square wave
-        use AlternateFunction.0 for digital io
-    */
-
-    palSetPadMode(GPIOB, 0, PAL_MODE_ALTERNATE(0));
-	palSetPadMode(GPIOB, 0, PAL_MODE_OUTPUT_PUSHPULL);
-
-
-    while(true)
+    uint16_t temp = 0;
+    adcStart(&ADCD1, &adccfg);
+    while(!0)
     {
-        //systime_t wakeTime = chVTGetSystemTimeX();
-        //uint32_t generator = (uint32_t) wakeTime;
-        //generator = (ST2MS(generator) / 1000) % 10;
-        uint32_t period = 1000; // usec
-        palSetPad(GPIOB, 0);
-        chThdSleepMicroseconds(period/2);
-        palClearPad(GPIOB, 0);
-        chThdSleepMicroseconds(period/2);
+        adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
+        temp = samples_buf[0];
+        sdWrite(&SD2, &temp,1);
+        chThdSleepMilliseconds(1);
     }
 }
+
 
 static void thFunc1(void *arg)
 {
@@ -209,7 +242,10 @@ int main(void)
 	palSetPadMode(GPIOD, 15, PAL_MODE_OUTPUT_PUSHPULL);
 	/*usart2 ve ledler kullanıma hazır*/
 
-    chThdCreateStatic(squareWaveWA, sizeof(squareWaveWA), HIGHPRIO, squareWave, NULL);
+	/*analog input*/
+	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG); // this is 10th channel
+
+    chThdCreateStatic(analogReadWA, sizeof(analogReadWA), HIGHPRIO, analogReadtoSD, NULL);
 	chThdCreateStatic(readerArea, sizeof(readerArea), NORMALPRIO, thFunc1, NULL);
 	tp = chThdCreateStatic(worker1Area, sizeof(worker1Area), NORMALPRIO, thFunc2, NULL);
 	chThdWait(tp);
