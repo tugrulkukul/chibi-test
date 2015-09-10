@@ -37,34 +37,34 @@ static ADCConfig adccfg = {};
 #define ADC_CH_NUM 1    // Tek girişten okuyacağız
 static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
 
-static ADCConversionGroup adccg = {
+static const ADCConversionGroup adccg = {
    // this 3 fields are common for all MCUs
       // set to TRUE if need circular buffer, set FALSE otherwise
-      FALSE,
+      circular : FALSE,
       // number of channels
-      (uint16_t)(ADC_CH_NUM),
+      num_channels : ADC_CH_NUM,
       // callback function when conversion ends
-      NULL,
+      end_cb : NULL,
       //callback function when error appears
-      NULL,
-    //look to datasheet for information about the registers
+      error_cb : NULL,
+      //look to datasheet for information about the registers
       // CR1 register content
-      0,
+      cr1 : 0,
       // CR2 register content
-      0,
+      cr2 : ADC_CR2_SWSTART,//?
       // SMRP1 register content
-      0,
+      smpr1 : 0,
       // SMRP2 register content
-      0,
+      smpr2 : 0,
       // SQR1 register content
-      ((ADC_CH_NUM - 1) << 20),
+      sqr1 : ((ADC_CH_NUM - 1) << 20),
       // SQR2 register content
-      0,
+      sqr2 : 0,
       // SQR3 register content. We must select 1 channel
-      // For example 10th channel
+      // For example 2nd channel
       // if we want to select more than 1 channel then simply
       // shift and logic or the values example (ch 15 & ch 10) : (15 | (10 << 5))
-      10,
+      sqr3 : 6
 };
 
 /* ADC Related */
@@ -90,7 +90,7 @@ static void analogReadtoSD(void *arg)
     adcStart(&ADCD1, &adccfg);
     while(!0)
     {
-        adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
+        adcStartConversion(&ADCD1, &adccg, samples_buf, ADC_BUF_DEPTH);
         temp = samples_buf[0];
         sdWrite(&SD2, &temp,1);
         chThdSleepMilliseconds(1);
@@ -243,11 +243,11 @@ int main(void)
 	/*usart2 ve ledler kullanıma hazır*/
 
 	/*analog input*/
-	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG); // this is 10th channel
+	palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_ANALOG); // this is 10th channel
 
-    chThdCreateStatic(analogReadWA, sizeof(analogReadWA), HIGHPRIO, analogReadtoSD, NULL);
-	chThdCreateStatic(readerArea, sizeof(readerArea), NORMALPRIO, thFunc1, NULL);
-	tp = chThdCreateStatic(worker1Area, sizeof(worker1Area), NORMALPRIO, thFunc2, NULL);
+    tp = chThdCreateStatic(analogReadWA, sizeof(analogReadWA), HIGHPRIO, analogReadtoSD, NULL);
+	//chThdCreateStatic(readerArea, sizeof(readerArea), NORMALPRIO, thFunc1, NULL);
+	//tp = chThdCreateStatic(worker1Area, sizeof(worker1Area), NORMALPRIO, thFunc2, NULL);
 	chThdWait(tp);
 
 	return 0;
