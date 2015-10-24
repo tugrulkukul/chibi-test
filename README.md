@@ -108,28 +108,34 @@ INSTALL:
               ln -s /path/to/Chibios-3.x ~/ChibiOS
 
     5. Dowload and configure GUI Debugger: Code::Blocks
+      
+      install Code::Blocks:
+        
+          sudo apt-get install codeblocks
+          run codeblock
+            open new project
+              empty-project
+          
+      configure code::blocks:
 
+          Project -> Properties // Project Settings --> do tick: "This is a custom Makefile"
+          Project -> Properties // Debugger
 
-          configuration steps for code::blocks:
+              Select Target: <Project>
 
-              1. Project -> Properties // Project Settings --> do tick: "This is a custom Makefile"
-              3. Project -> Properties // Debugger
+              Remote Connection:
+                  IP address: localhost
+                  Port: 4242
 
-                  Select Target: <Project>
+              Additional GDB Commands:
+                  After Connection:
+                    (copy and paste `./gdb-init` file contents here)
 
-                  Remote Connection:
-                      IP address: localhost
-                      Port: 4242
-
-                  Additional GDB Commands:
-                      After Connection:
-               4.        (copy and paste `./gdb-init` file contents here)
-
-               2. Settings -> Compiler and Debugger Settings //
-                  // Global Compiler Settings
-                    // Selected compiler: select any name you want
-                    // Debugger executable path: $(which arm-none-eabi-gdb)
-                5.  // Do *not* run the debugee
+          Settings -> Compiler and Debugger Settings //
+            // Global Compiler Settings
+              // Selected compiler: select any name you want
+              // Debugger executable path: $(which arm-none-eabi-gdb)
+              // Do *not* run the debugee
 
 ### Windows
 
